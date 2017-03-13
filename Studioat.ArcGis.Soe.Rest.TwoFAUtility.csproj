@@ -98,7 +98,20 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="README.md" />
     <None Include="TwoFAUtility.snk" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Images\Code.PNG" />
+    <Content Include="Images\CodeKO.PNG" />
+    <Content Include="Images\GA.PNG" />
+    <Content Include="Images\LoginRest.PNG" />
+    <Content Include="Images\ScanQRCode.PNG" />
+    <Content Include="Images\TwoFAOperation.PNG" />
+    <Content Include="Images\TwoFAOperationQRCode.PNG" />
+    <Content Include="Images\TwoFAOperationSetParameters.PNG" />
+    <Content Include="Images\TwoFAUtility.PNG" />
+    <Content Include="Images\WA.PNG" />
   </ItemGroup>
   <PropertyGroup>
     <ZipFileExtension>soe</ZipFileExtension>

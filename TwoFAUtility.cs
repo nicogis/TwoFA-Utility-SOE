@@ -182,7 +182,7 @@ namespace Studioat.ArcGis.Soe.Rest.TwoFAUtility
             RestResource infoResource = new RestResource("Info", false, this.InfoResHandler);
             soeResource.resources.Add(infoResource);
 
-            RestOperation twoFAOperation = new RestOperation("twoFa", new string[] { "issuerID", "reset" }, new string[] { "json", "image" }, this.TwoFAOperationHandler);
+            RestOperation twoFAOperation = new RestOperation("twoFA", new string[] { "issuerID", "reset" }, new string[] { "json", "image" }, this.TwoFAOperationHandler);
 
             RestOperation addOperation = new RestOperation("addOperation", new string[] { "value1", "value2", "code" }, new string[] { "json" }, this.AddOperationHandler);
 
