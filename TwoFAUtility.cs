@@ -7,26 +7,33 @@
 namespace Studioat.ArcGis.Soe.Rest.TwoFAUtility
 {
     using System;
+    using System.Collections.Generic;
     using System.Collections.Specialized;
+    using System.Diagnostics.CodeAnalysis;
+    using System.Drawing;
     using System.Drawing.Imaging;
     using System.IO;
+    using System.Linq;
     using System.Reflection;
     using System.Runtime.InteropServices;
     using System.Text;
     using System.Threading;
-    using System.Web;
     using Base32;
     using ESRI.ArcGIS.Carto;
     using ESRI.ArcGIS.esriSystem;
     using ESRI.ArcGIS.Server;
     using ESRI.ArcGIS.SOESupport;
-    using System.Linq;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
     using OtpSharp;
     using QRCoder;
-    using System.Collections.Generic;
 
+    [SuppressMessage("Microsoft.StyleCop.CSharp.NamingRules", "SA1305:FieldNamesMustNotUseHungarianNotation", Justification = "-")]
+    [SuppressMessage("Microsoft.StyleCop.CSharp.NamingRules", "SA1306:FieldNamesMustBeginWithLowerCaseLetter", Justification = "-")]
+     
+    /// <summary>
+    /// class TwoFAUtility
+    /// </summary>
     [ComVisible(true)]
     [Guid("de673489-fe8f-4010-91fd-f629972a75c8")]
     [ClassInterface(ClassInterfaceType.None)]
@@ -40,12 +47,17 @@ namespace Studioat.ArcGis.Soe.Rest.TwoFAUtility
         SupportsSOAP = false)]
     public class TwoFAUtility : IServerObjectExtension, IObjectConstruct, IRESTRequestHandler
     {
-        // secretKey are from this external file. Advantage of an external file is that 
-        // same SOE can be used for multiple services and permission for all of these services
-        // is read from the twoFA.json file. 
-        private string twoFAFilePath = "C:\\arcgisserver\\twoFA.json";
-
+        /// <summary>
+        /// object lock write
+        /// </summary>
         private static ReaderWriterLockSlim readWriteLock = new ReaderWriterLockSlim();
+
+        /// <summary>
+        /// secretKey are from this external file. Advantage of an external file is that 
+        /// same SOE can be used for multiple services and permission for all of these services
+        /// is read from the twoFA.json file. 
+        /// </summary>
+        private string twoFAFilePath = "C:\\arcgisserver\\twoFA.json";
 
         /// <summary>
         /// name of soe
@@ -69,23 +81,30 @@ namespace Studioat.ArcGis.Soe.Rest.TwoFAUtility
         /// </summary>
         private IRESTRequestHandler reqHandler;
 
-        // virtual folder of service output 
+        /// <summary>
+        /// virtual folder of service output 
+        /// </summary>
         private string pathOutputVirtualAGS;
 
-        // physical folder of service output   
+        /// <summary>
+        /// physical folder of service output 
+        /// </summary>      
         private string pathOutputAGS;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="TwoFAUtility"/> class
+        /// </summary>
         public TwoFAUtility()
         {
             this.soeName = this.GetType().Name;
-            // this.logger = new ServerLogger();
-            this.reqHandler = new SoeRestImpl(this.soeName, CreateRestSchema()) as IRESTRequestHandler;
+            //// this.logger = new ServerLogger();
+            this.reqHandler = new SoeRestImpl(this.soeName, this.CreateRestSchema()) as IRESTRequestHandler;
         }
 
         #region IServerObjectExtension Members
 
         /// <summary>
-        /// init() is called once, when the instance of the SOE is created.
+        /// is called once, when the instance of the SOE is created.
         /// </summary>
         /// <param name="pSOH">object server Object</param>
         public void Init(IServerObjectHelper pSOH)
@@ -97,7 +116,6 @@ namespace Studioat.ArcGis.Soe.Rest.TwoFAUtility
             this.pathOutputVirtualAGS = mapServerInit.VirtualOutputDirectory;
   
             this.pathOutputAGS = mapServerInit.PhysicalOutputDirectory;
-
         }
 
         /// <summary>
@@ -135,7 +153,7 @@ namespace Studioat.ArcGis.Soe.Rest.TwoFAUtility
             return this.reqHandler.GetSchema();
         }
 
-        // <summary>
+        /// <summary>
         /// handle rest request
         /// </summary>
         /// <param name="Capabilities">capabilities of soe</param>
@@ -153,6 +171,10 @@ namespace Studioat.ArcGis.Soe.Rest.TwoFAUtility
 
         #endregion
 
+        /// <summary>
+        /// create rest schema
+        /// </summary>
+        /// <returns>object RestResource</returns>
         private RestResource CreateRestSchema()
         {
             RestResource soeResource = new RestResource(this.soeName, false, this.RootResHandler);
@@ -160,15 +182,9 @@ namespace Studioat.ArcGis.Soe.Rest.TwoFAUtility
             RestResource infoResource = new RestResource("Info", false, this.InfoResHandler);
             soeResource.resources.Add(infoResource);
 
-            RestOperation twoFAOperation = new RestOperation("twoFa",
-                                                      new string[] { "issuerID", "reset" },
-                                                      new string[] { "json" , "image"},
-                                                      this.TwoFAOperationHandler);
+            RestOperation twoFAOperation = new RestOperation("twoFa", new string[] { "issuerID", "reset" }, new string[] { "json", "image" }, this.TwoFAOperationHandler);
 
-            RestOperation addOperation = new RestOperation("addOperation",
-                                                      new string[] { "value1", "value2", "code"},
-                                                      new string[] { "json" },
-                                                      this.AddOperationHandler);
+            RestOperation addOperation = new RestOperation("addOperation", new string[] { "value1", "value2", "code" }, new string[] { "json" }, this.AddOperationHandler);
 
             soeResource.operations.Add(twoFAOperation);
             soeResource.operations.Add(addOperation);
@@ -176,6 +192,14 @@ namespace Studioat.ArcGis.Soe.Rest.TwoFAUtility
             return soeResource;
         }
 
+        /// <summary>
+        /// Root Resource Handler
+        /// </summary>
+        /// <param name="boundVariables">object boundVariables</param>
+        /// <param name="outputFormat">object outputFormat</param>
+        /// <param name="requestProperties">object requestProperties</param>
+        /// <param name="responseProperties">object responseProperties</param>
+        /// <returns>object Root Resource Handler</returns>
         private byte[] RootResHandler(NameValueCollection boundVariables, string outputFormat, string requestProperties, out string responseProperties)
         {
             responseProperties = null;
@@ -208,11 +232,16 @@ namespace Studioat.ArcGis.Soe.Rest.TwoFAUtility
             return result.JsonByte();
         }
 
-        private byte[] TwoFAOperationHandler(NameValueCollection boundVariables,
-                                                  JsonObject operationInput,
-                                                      string outputFormat,
-                                                      string requestProperties,
-                                                  out string responseProperties)
+        /// <summary>
+        /// Returns JSON representation of 2FA operation.
+        /// </summary>
+        /// <param name="boundVariables">object boundVariables</param>
+        /// <param name="operationInput">object operationInput</param>
+        /// <param name="outputFormat">object outputFormat</param>
+        /// <param name="requestProperties">object requestProperties</param>
+        /// <param name="responseProperties">object responseProperties</param>
+        /// <returns>string JSON representation of operation 2FA</returns>
+        private byte[] TwoFAOperationHandler(NameValueCollection boundVariables, JsonObject operationInput, string outputFormat, string requestProperties, out string responseProperties)
         {
             responseProperties = null;
 
@@ -231,7 +260,7 @@ namespace Studioat.ArcGis.Soe.Rest.TwoFAUtility
                 
                 if (found && resetValue.HasValue)
                 {
-                    reset = resetValue.HasValue;
+                    reset = resetValue.Value;
                 }
 
                 // the issuer ID that will appear on the user's Authenticator app, right above the code. 
@@ -251,27 +280,29 @@ namespace Studioat.ArcGis.Soe.Rest.TwoFAUtility
                     JObject o = JObject.Parse(File.ReadAllText(this.twoFAFilePath));
                     JsonSerializer serializer = new JsonSerializer();
                     users2FA = (Users2FA)serializer.Deserialize(new JTokenReader(o), typeof(Users2FA));
-                    User user = users2FA.users.Where(u => u.name == userName).SingleOrDefault();
+                    User user = users2FA.Users.Where(u => u.Name == userName).SingleOrDefault();
                     if (user == null)
                     {
-                        users2FA.users.Add(new User() { name = userName, secretKey = Base32Encoder.Encode(secretKey) });
+                        users2FA.Users.Add(new User() { Name = userName, SecretKey = Base32Encoder.Encode(secretKey), IssuerID = issuerIDValue });
                     }
                     else
                     {
-                        if (string.IsNullOrWhiteSpace(user.secretKey) || reset)
+                        if (string.IsNullOrWhiteSpace(user.SecretKey) || string.IsNullOrWhiteSpace(user.IssuerID) || reset)
                         {
-                            user.secretKey = Base32Encoder.Encode(secretKey);
+                            user.SecretKey = Base32Encoder.Encode(secretKey);
+                            user.IssuerID = issuerIDValue;
                         }
                         else
                         {
-                            secretKey = Base32Encoder.Decode(user.secretKey);
+                            secretKey = Base32Encoder.Decode(user.SecretKey);
+                            issuerIDValue = user.IssuerID;
                         }
                     }
                 }
                 else
                 {
-                    User user = new User() { name = userName, secretKey = Base32Encoder.Encode(secretKey) };
-                    users2FA = new Users2FA() { users = new List<User> { user } };
+                    User user = new User() { Name = userName, SecretKey = Base32Encoder.Encode(secretKey), IssuerID = issuerIDValue };
+                    users2FA = new Users2FA() { Users = new List<User> { user } };
                 }
 
                 string json = JsonConvert.SerializeObject(users2FA, Formatting.Indented);
@@ -289,11 +320,10 @@ namespace Studioat.ArcGis.Soe.Rest.TwoFAUtility
 
                 string url = KeyUrl.GetTotpUrl(secretKey, userName) + $"&issuer={issuerIDValue}";
 
-
                 QRCodeGenerator qrGenerator = new QRCodeGenerator();
                 QRCodeGenerator.QRCode qrCode = qrGenerator.CreateQrCode(url, QRCodeGenerator.ECCLevel.Q);
 
-                using (System.Drawing.Bitmap image = qrCode.GetGraphic(20))
+                using (Bitmap image = qrCode.GetGraphic(20))
                 {
                     if (outputFormat == "json")
                     {
@@ -303,35 +333,37 @@ namespace Studioat.ArcGis.Soe.Rest.TwoFAUtility
                         image.Save(pathfileName, ImageFormat.Png);
                         JsonObject jsonObject = new JsonObject();
                         jsonObject.AddString("url", $"{this.pathOutputVirtualAGS}/{fileName}");
-                        jsonObject.AddLong("status_code", 200);
-                        jsonObject.AddString("status_txt", "OK");
-                        jsonObject.AddString("text", url);
+                        jsonObject.AddString("barcodeUrl", url);
                         return jsonObject.JsonByte();
                     }
                     else if (outputFormat == "image")
                     {
                         responseProperties = "{\"Content-Type\" : \"image/png\"}";
-                        return Helper.ImageToByte(image, ImageFormat.Png);
+                        return Helper.ImageToByteArray(image, ImageFormat.Png);
                     }
                     else
                     {
                         throw new QRCoderException("Format output not found!");
                     }
                 }
-
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 ObjectError o = new ObjectError(ex.Message);
                 return o.ToJsonObject().JsonByte();
             }  
         }
 
-        private byte[] AddOperationHandler(NameValueCollection boundVariables,
-                                          JsonObject operationInput,
-                                              string outputFormat,
-                                              string requestProperties,
-                                          out string responseProperties)
+        /// <summary>
+        /// Returns JSON representation of Add operation.
+        /// </summary>
+        /// <param name="boundVariables">object boundVariables</param>
+        /// <param name="operationInput">object operationInput</param>
+        /// <param name="outputFormat">object outputFormat</param>
+        /// <param name="requestProperties">object requestProperties</param>
+        /// <param name="responseProperties">object responseProperties</param>
+        /// <returns>string JSON representation of operation Add</returns>
+        private byte[] AddOperationHandler(NameValueCollection boundVariables, JsonObject operationInput, string outputFormat, string requestProperties, out string responseProperties)
         {
             responseProperties = null;
 
@@ -344,37 +376,14 @@ namespace Studioat.ArcGis.Soe.Rest.TwoFAUtility
                     throw new ArgumentNullException("code");
                 }
 
-                string userName = (this.GetServerEnvironment() as IServerEnvironment3).UserInfo.Name;
-
-                JObject o = JObject.Parse(File.ReadAllText(this.twoFAFilePath));
-                JsonSerializer serializer = new JsonSerializer();
-                Users2FA users2FA = (Users2FA)serializer.Deserialize(new JTokenReader(o), typeof(Users2FA));
-                User user = users2FA.users.Where(u => u.name == userName).SingleOrDefault();
-
-                byte[] secretKey = null;
-                if (user == null)
-                {
-                    throw new Exception("user not found!");
-                }
-                else
-                {
-                    if (string.IsNullOrWhiteSpace(user.secretKey))
-                    {
-                        throw new Exception("check user configuration!");
-                    }
-                    else
-                    {
-                        secretKey = Base32Encoder.Decode(user.secretKey);
-                    }
-                }
-
                 long timeStepMatched = 0;
-                var otp = new Totp(secretKey);
+                var correction = new TimeCorrection(DateTime.UtcNow);
+                var otp = new Totp(this.GetSecretKey(), timeCorrection : correction);
 
                 JsonObject result = new JsonObject();
 
                 // check code from Authenticator App
-                if (otp.VerifyTotp(codeValue.ToString(), out timeStepMatched))
+                if (otp.VerifyTotp(codeValue.ToString(), out timeStepMatched, VerificationWindow.RfcSpecifiedNetworkDelay))
                 {
                     long? value1Value;
                     found = operationInput.TryGetAsLong("value1", out value1Value);
@@ -397,16 +406,52 @@ namespace Studioat.ArcGis.Soe.Rest.TwoFAUtility
                     result.AddString("result", "Code not valid!");
                 }
 
-
-                return Encoding.UTF8.GetBytes(result.ToJson());
+                return result.JsonByte();
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 ObjectError o = new ObjectError(ex.Message);
                 return o.ToJsonObject().JsonByte();
             }
         }
 
+        /// <summary>
+        /// Get Secret Key
+        /// </summary>
+        /// <returns>return secret key</returns>
+        private byte[] GetSecretKey()
+        {
+            string userName = (this.GetServerEnvironment() as IServerEnvironment3).UserInfo.Name;
+
+            JObject o = JObject.Parse(File.ReadAllText(this.twoFAFilePath));
+            JsonSerializer serializer = new JsonSerializer();
+            Users2FA users2FA = (Users2FA)serializer.Deserialize(new JTokenReader(o), typeof(Users2FA));
+            User user = users2FA.Users.Where(u => u.Name == userName).SingleOrDefault();
+
+            byte[] secretKey = null;
+            if (user == null)
+            {
+                throw new Exception("user not found!");
+            }
+            else
+            {
+                if (string.IsNullOrWhiteSpace(user.SecretKey))
+                {
+                    throw new Exception("check user configuration!");
+                }
+                else
+                {
+                    secretKey = Base32Encoder.Decode(user.SecretKey);
+                }
+            }
+
+            return secretKey;
+        }
+
+        /// <summary>
+        /// Get Server Environment
+        /// </summary>
+        /// <returns>object GetServerEnvironment</returns>
         private IServerEnvironment GetServerEnvironment()
         {
             IEnvironmentManager em = new EnvironmentManagerClass();
@@ -419,9 +464,10 @@ namespace Studioat.ArcGis.Soe.Rest.TwoFAUtility
                 {
                     object o = em.GetEnvironment(iseUid);
                     return o as IServerEnvironment;
-
                 }
-                catch { }
+                catch
+                {
+                }
 
                 return null;
             }

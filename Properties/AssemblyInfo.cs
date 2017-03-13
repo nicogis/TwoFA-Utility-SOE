@@ -41,7 +41,6 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyVersion("1.0.0.0")]
 [assembly: AssemblyFileVersion("1.0.0.0")]
 
-
 [assembly: ESRI.ArcGIS.SOESupport.AddInPackage("Studioat.ArcGis.Soe.Rest.TwoFAUtility", "551a9d68-ca67-4a57-a571-f3565f382664",
     Author = "Nicogis",
     Company = "",

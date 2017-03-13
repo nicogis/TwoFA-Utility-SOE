@@ -10,19 +10,24 @@ namespace Studioat.ArcGis.Soe.Rest.TwoFAUtility
     using System.Drawing.Imaging;
     using System.IO;
 
+    /// <summary>
+    /// class helper
+    /// </summary>
     internal class Helper
     {
-        public static byte[] ImageToByte(Image img, ImageFormat format)
+        /// <summary>
+        /// Image To Byte Array
+        /// </summary>
+        /// <param name="image">object image</param>
+        /// <param name="format">format of image</param>
+        /// <returns>byte array from image</returns>
+        public static byte[] ImageToByteArray(Image image, ImageFormat format)
         {
-            byte[] byteArray = new byte[0];
-            using (MemoryStream stream = new MemoryStream())
+            using (var ms = new MemoryStream())
             {
-                img.Save(stream, format);
-                stream.Close();
-
-                byteArray = stream.ToArray();
+                image.Save(ms, format);
+                return ms.ToArray();
             }
-            return byteArray;
         }
     }
 }
