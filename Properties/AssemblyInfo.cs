@@ -43,9 +43,9 @@ using System.Runtime.InteropServices;
 
 [assembly: ESRI.ArcGIS.SOESupport.AddInPackage("Studioat.ArcGis.Soe.Rest.TwoFAUtility", "551a9d68-ca67-4a57-a571-f3565f382664",
     Author = "Nicogis",
-    Company = "",
-    Date = "3/10/2017 1:16:38 PM",
+    Company = "Studio A&T s.r.l.",
+    Date = "21/02/2023 1:20:38 PM",
     Description = "",
     TargetProduct = "Server",
-    TargetVersion = "10.5",
+    TargetVersion = "10.9",
     Version = "1.0")]

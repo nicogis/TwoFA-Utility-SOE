@@ -6,6 +6,15 @@
 //-----------------------------------------------------------------------
 namespace Studioat.ArcGis.Soe.Rest.TwoFAUtility
 {
+    using Base32;
+    using ESRI.ArcGIS.Carto;
+    using ESRI.ArcGIS.esriSystem;
+    using ESRI.ArcGIS.Server;
+    using ESRI.ArcGIS.SOESupport;
+    using Newtonsoft.Json;
+    using Newtonsoft.Json.Linq;
+    using OtpSharp;
+    using QRCoder;
     using System;
     using System.Collections.Generic;
     using System.Collections.Specialized;
@@ -16,17 +25,7 @@ namespace Studioat.ArcGis.Soe.Rest.TwoFAUtility
     using System.Linq;
     using System.Reflection;
     using System.Runtime.InteropServices;
-    using System.Text;
     using System.Threading;
-    using Base32;
-    using ESRI.ArcGIS.Carto;
-    using ESRI.ArcGIS.esriSystem;
-    using ESRI.ArcGIS.Server;
-    using ESRI.ArcGIS.SOESupport;
-    using Newtonsoft.Json;
-    using Newtonsoft.Json.Linq;
-    using OtpSharp;
-    using QRCoder;
 
     [SuppressMessage("Microsoft.StyleCop.CSharp.NamingRules", "SA1305:FieldNamesMustNotUseHungarianNotation", Justification = "-")]
     [SuppressMessage("Microsoft.StyleCop.CSharp.NamingRules", "SA1306:FieldNamesMustBeginWithLowerCaseLetter", Justification = "-")]
@@ -454,7 +453,11 @@ namespace Studioat.ArcGis.Soe.Rest.TwoFAUtility
         /// <returns>object GetServerEnvironment</returns>
         private IServerEnvironment GetServerEnvironment()
         {
-            IEnvironmentManager em = new EnvironmentManagerClass();
+
+            Type t = Type.GetTypeFromProgID("esriSystem.EnvironmentManager");
+            Object obj = Activator.CreateInstance(t);
+            IEnvironmentManager em = obj as IEnvironmentManager;
+
             if (em != null)
             {
                 UID iseUid = new UIDClass();
